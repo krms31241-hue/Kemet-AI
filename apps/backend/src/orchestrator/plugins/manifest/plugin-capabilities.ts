@@ -1,0 +1,17 @@
+export type PluginCapability =
+  | "filesystem"
+  | "terminal"
+  | "git"
+  | "docker"
+  | "browser"
+  | "database"
+  | "network"
+  | "ai"
+  | "media"
+  | "document"
+  | "deployment"
+  | "security"
+  | "testing"
+  | "workflow"
+  | "memory"
+  | "search";

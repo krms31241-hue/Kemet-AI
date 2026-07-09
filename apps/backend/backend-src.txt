@@ -1,0 +1,790 @@
+==================== src/api/routes/index.ts ====================
+import { Router } from "express";
+
+import { authRoutes } from "../../modules/auth/index.js";
+
+export const apiRouter = Router();
+
+apiRouter.get("/health", (_, res) => {
+  res.status(200).json({
+    success: true,
+    service: "Kemet AI Backend",
+    version: "1.0.0",
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+apiRouter.use("/auth", authRoutes);
+
+==================== src/app/app.ts ====================
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+
+export function createApp() {
+  const app = express();
+
+  app.use(helmet());
+
+  app.use(cors({
+    origin: true,
+    credentials: true,
+  }));
+
+  app.use(compression());
+
+  app.use(cookieParser());
+
+  app.use(express.json());
+
+  app.use(express.urlencoded({ extended: true }));
+
+  return app;
+}
+
+==================== src/config/env.ts ====================
+import dotenv from "dotenv";
+import { z } from "zod";
+
+dotenv.config();
+
+const envSchema = z.object({
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+
+  PORT: z.coerce.number().default(4000),
+
+  JWT_SECRET: z.string().min(32),
+
+  DATABASE_URL: z.string().min(1),
+});
+
+export const env = envSchema.parse(process.env);
+
+==================== src/database/prisma.ts ====================
+import { PrismaClient } from "@prisma/client";
+
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+export const prisma =
+  globalThis.prisma ??
+  new PrismaClient({
+    log: ["error", "warn"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalThis.prisma = prisma;
+}
+
+==================== src/index.ts ====================
+import { createHttpServer } from "./server.js";
+import { env } from "./config/env.js";
+
+const server = createHttpServer();
+
+server.listen(env.PORT, () => {
+  console.log(
+    `🚀 Kemet AI Backend running on http://localhost:${env.PORT}`
+  );
+});
+
+==================== src/middlewares/auth.middleware.t ====================
+import { Request, Response, NextFunction } from "express";
+
+import { verifyAccessToken } from "../utils/jwt.js";
+
+export interface AuthenticatedRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+  };
+}
+
+export function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const authorization = req.headers.authorization;
+
+  if (!authorization) {
+    return res.status(401).json({
+      success: false,
+      message: "Authorization header is missing",
+    });
+  }
+
+  if (!authorization.startsWith("Bearer ")) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid authorization format",
+    });
+  }
+
+  const token = authorization.slice(7);
+
+  try {
+    const payload = verifyAccessToken(token);
+
+    (req as AuthenticatedRequest).user = payload;
+
+    next();
+  } catch {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
+  }
+
+
+==================== src/middlewares/auth.middleware.ts ====================
+import { Request, Response, NextFunction } from "express";
+
+import { verifyAccessToken } from "../utils/jwt.js";
+
+export interface AuthenticatedRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+  };
+}
+
+export function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const authorization = req.headers.authorization;
+
+  if (!authorization) {
+    return res.status(401).json({
+      success: false,
+      message: "Authorization header is missing",
+    });
+  }
+
+  if (!authorization.startsWith("Bearer ")) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid authorization format",
+    });
+  }
+
+  const token = authorization.slice(7);
+
+  try {
+    const payload = verifyAccessToken(token);
+
+    (req as AuthenticatedRequest).user = payload;
+
+    next();
+  } catch {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
+  }
+}
+
+==================== src/middlewares/error.middleware.ts ====================
+import { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
+
+export function errorMiddleware(
+  error: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+) {
+  if (error instanceof ZodError) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: error.issues,
+    });
+  }
+
+  if (error instanceof Error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+}
+
+==================== src/modules/auth/auth.controller.ts ====================
+import { Request, Response } from "express";
+
+import { authService } from "./auth.service.js";
+import {
+  loginSchema,
+  registerSchema,
+} from "./auth.validator.js";
+
+import type {
+  AuthenticatedRequest,
+} from "../../middlewares/auth.middleware.js";
+
+export class AuthController {
+  async register(req: Request, res: Response) {
+    const body = registerSchema.parse(req.body);
+
+    const result = await authService.register(body);
+
+    return res.status(201).json(result);
+  }
+
+  async login(req: Request, res: Response) {
+    const body = loginSchema.parse(req.body);
+
+    const result = await authService.login(body);
+
+    return res.status(200).json(result);
+  }
+
+  async me(req: Request, res: Response) {
+    const authReq = req as AuthenticatedRequest;
+
+    const result = await authService.me(
+      authReq.user.userId,
+    );
+
+    return res.status(200).json(result);
+  }
+}
+
+export const authController = new AuthController();
+
+==================== src/modules/auth/auth.routes.ts ====================
+import { Router } from "express";
+
+import { authController } from "./auth.controller.js";
+
+import { asyncHandler } from "../../middlewares/async-handler.js";
+import { authMiddleware } from "../../middlewares/auth.middleware.js";
+
+const router = Router();
+
+router.post(
+  "/register",
+  asyncHandler((req, res) =>
+    authController.register(req, res),
+  ),
+);
+
+router.post(
+  "/login",
+  asyncHandler((req, res) =>
+    authController.login(req, res),
+  ),
+);
+
+router.get(
+  "/me",
+  authMiddleware,
+  asyncHandler((req, res) =>
+    authController.me(req, res),
+  ),
+);
+
+export default router;
+
+==================== src/modules/auth/auth.service.ts ====================
+import bcrypt from "bcryptjs";
+
+import { generateAccessToken } from "../../utils/jwt.js";
+import { userRepository } from "../../repositories/index.js";
+
+import type {
+  LoginInput,
+  RegisterInput,
+} from "./auth.validator.js";
+
+export class AuthService {
+  async register(data: RegisterInput) {
+    const existingEmail = await userRepository.findByEmail(data.email);
+
+    if (existingEmail) {
+      throw new Error("Email already exists");
+    }
+
+    const existingUsername = await userRepository.findByUsername(
+      data.username,
+    );
+
+    if (existingUsername) {
+      throw new Error("Username already exists");
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 12);
+
+    const user = await userRepository.create({
+      email: data.email,
+      username: data.username,
+      passwordHash,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      avatarUrl: undefined,
+    });
+
+    const accessToken = generateAccessToken({
+      userId: user.id,
+      email: user.email,
+    });
+
+    return {
+      success: true,
+      message: "User created successfully",
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+      },
+    };
+  }
+
+  async login(data: LoginInput) {
+    const user = await userRepository.findByEmail(data.email);
+
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const validPassword = await bcrypt.compare(
+      data.password,
+      user.passwordHash,
+    );
+
+    if (!validPassword) {
+      throw new Error("Invalid credentials");
+    }
+
+    const accessToken = generateAccessToken({
+      userId: user.id,
+      email: user.email,
+    });
+
+    return {
+      success: true,
+      message: "Login successful",
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+      },
+    };
+  }
+
+  async me(userId: string) {
+    const user = await userRepository.findById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    };
+  }
+}
+
+export const authService = new AuthService();
+
+==================== src/modules/auth/auth.validator.ts ====================
+import { z } from "zod";
+
+export const registerSchema = z.object({
+  email: z.email(),
+
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(/^[a-zA-Z0-9_]+$/),
+
+  password: z.string().min(8).max(128),
+
+  firstName: z.string().min(2).max(50).optional(),
+
+  lastName: z.string().min(2).max(50).optional(),
+});
+
+export const loginSchema = z.object({
+  email: z.email(),
+
+  password: z.string().min(8).max(128),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+
+==================== src/modules/auth/index.ts ====================
+export { default as authRoutes } from "./auth.routes.js";
+
+==================== src/repositories/index.ts ====================
+export * from "./user.repository.js";
+
+==================== src/repositories/user.repository.t ====================
+
+  id: string;
+  email: string;
+  username: string;
+  passwordHash: string;
+i  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+
+  updatedAt: Date;
+}
+
+export class UserRepository {
+  private users = new Map<string, UserEntity>()
+    return null;
+  }
+
+  async findByUsername(username: string): Promise<UserEntity | null> {
+    for (const user of this.users.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
+  async create(
+    user: Omit<UserEntity, "id" | "createdAt" | "updatedAt">,
+  ): Promise<UserEntity> {
+ import crypto from "node:crypto";
+
+export interface UserEntity {
+  id: string;
+
+  email: string;
+
+  username: string;
+
+  passwordHash: string;
+
+  firstName?: string;
+
+  lastName?: string;
+
+  avatarUrl?: string;
+
+  createdAt: Date;
+
+  updatedAt: Date;
+}
+
+export class UserRepository {
+  private users = new Map<string, UserEntity>();
+
+  async findById(id: string) {
+    return this.users.get(id) ?? null;
+  }
+
+  async findByEmail(email: string) {
+    for (const user of this.users.values()) {
+      if (user.email === email) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
+  async findByUsername(username: string) {
+    for (const user of this.users.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
+  async create(
+    user: Omit<UserEntity, "id" | "createdAt" | "updatedAt">,
+  ) {
+    const entity: UserEntity = {
+      ...user,
+
+     import crypto from "node:crypto";
+
+export interface UserEntity {
+  id: string;
+
+  email: string;
+
+  username: string;
+
+  passwordHash: string;
+
+  firstName?: string;
+
+  lastName?: string;
+
+  avatarUrl?: string;
+
+  createdAt: Date;
+
+  updatedAt: Date;
+}
+
+export class UserRepository {
+  private users = new Map<string, UserEntity>();
+
+  async findById(id: string) {
+    return this.users.get(id) ?? null;
+  }
+
+  async findByEmail(email: string) {
+    for (const user of this.users.values()) {
+      if (user.email === email) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
+  async findByUsername(username: string) {
+    for (const user of this.users.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
+  async create(
+    user: Omit<UserEntity, "id" | "createdAt" | "updatedAt">,
+  ) {
+    const entity: UserEntity = {
+      ...user,
+
+      id: crypto.randomUUID(),
+
+      createdAt: new Date(),
+
+      updatedAt: new Date(),
+    };
+
+    this.users.set(entity.id, entity);
+
+    return entity;
+  }
+
+  async update(
+    id: string,
+    data: Partial<Omit<UserEntity, "id">>,
+  ) {
+    const user = await this.findById(id);
+
+    if (!user) {
+      return null;
+    }
+
+    const updated: UserEntity = {
+      ...user,
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    this.users.set(id, updated);
+
+    return updated;
+  }
+
+  async delete(id: string) {
+    return this.users.delete(id);
+  }
+
+  async findAll() {
+    return [...this.users.values()];
+  }
+}
+
+export const userRepository = new UserRepository();
+
+
+==================== src/repositories/user.repository.ts ====================
+import crypto from "node:crypto";
+
+export interface UserEntity {
+  id: string;
+  email: string;
+  username: string;
+  passwordHash: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class UserRepository {
+  private users = new Map<string, UserEntity>();
+
+  async findById(id: string): Promise<UserEntity | null> {
+    return this.users.get(id) ?? null;
+  }
+
+  async findByEmail(email: string): Promise<UserEntity | null> {
+    for (const user of this.users.values()) {
+      if (user.email === email) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
+  async findByUsername(username: string): Promise<UserEntity | null> {
+    for (const user of this.users.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
+  async create(
+    user: Omit<UserEntity, "id" | "createdAt" | "updatedAt">,
+  ): Promise<UserEntity> {
+    const entity: UserEntity = {
+      ...user,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.users.set(entity.id, entity);
+
+    return entity;
+  }
+
+  async update(
+    id: string,
+    data: Partial<Omit<UserEntity, "id">>,
+  ): Promise<UserEntity | null> {
+    const user = await this.findById(id);
+
+    if (!user) {
+      return null;
+    }
+
+    const updated: UserEntity = {
+      ...user,
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    this.users.set(id, updated);
+
+    return updated;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.users.delete(id);
+  }
+
+  async findAll(): Promise<UserEntity[]> {
+    return [...this.users.values()];
+  }
+}
+
+export const userRepository = new UserRepository();
+
+==================== src/server.ts ====================
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+
+import { apiRouter } from "./api/routes/index.js";
+import { errorMiddleware } from "./middlewares/error.middleware.js";
+
+export function createHttpServer() {
+  const app = express();
+
+  app.use(cors());
+
+  app.use(helmet());
+
+  app.use(compression());
+
+  app.use(express.json());
+
+  app.use(cookieParser());
+
+  app.use("/api/v1", apiRouter);
+
+  app.use((_, res) => {
+    res.status(404).json({
+      success: false,
+      message: "Route not found",
+    });
+  });
+
+  app.use(errorMiddleware);
+
+  return app;
+}
+
+==================== src/utils/jwt.ts ====================
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET =
+  process.env.JWT_SECRET || "kemet-ai-super-secret";
+
+const EXPIRES_IN = "7d";
+
+export interface JwtPayload {
+  userId: string;
+  email: string;
+}
+
+export function generateAccessToken(payload: JwtPayload) {
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: EXPIRES_IN,
+  });
+}
+
+export function verifyAccessToken(token: string) {
+  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+}
+

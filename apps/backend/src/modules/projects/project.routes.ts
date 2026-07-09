@@ -1,0 +1,40 @@
+import { Router } from "express";
+
+import { authMiddleware } from "../../middlewares/auth.middleware.js";
+import { asyncHandler } from "../../middlewares/async-handler.js";
+
+import { projectController } from "./project.controller.js";
+
+const router = Router();
+
+router.use(authMiddleware);
+
+router.post(
+  "/",
+  asyncHandler((req, res, next) =>
+    projectController.create(req, res),
+  ),
+);
+
+router.get(
+  "/",
+  asyncHandler((req, res, next) =>
+    projectController.findAll(req, res),
+  ),
+);
+
+router.put(
+  "/:id",
+  asyncHandler((req, res, next) =>
+    projectController.update(req, res),
+  ),
+);
+
+router.delete(
+  "/:id",
+  asyncHandler((req, res, next) =>
+    projectController.delete(req, res),
+  ),
+);
+
+export default router;

@@ -1,0 +1,106 @@
+:root {
+  /* ========= Brand ========= */
+  --brand-name: "Kemet AI";
+
+  /* ========= Colors ========= */
+  --color-background: #06070a;
+  --color-surface: #0b0d12;
+  --color-surface-2: #11151d;
+  --color-surface-3: #171d29;
+
+  --color-card: rgba(18, 24, 36, 0.72);
+  --color-card-hover: rgba(24, 31, 47, 0.84);
+
+  --color-primary: #00e5c3;
+  --color-primary-hover: #33f5d3;
+  --color-primary-soft: rgba(0,229,195,.12);
+
+  --color-secondary: #f5c451;
+  --color-secondary-hover: #ffd97a;
+  --color-secondary-soft: rgba(245,196,81,.12);
+
+  --color-accent: #4cc9ff;
+  --color-success: #28d17c;
+  --color-warning: #ffb547;
+  --color-danger: #ff5d73;
+  --color-info: #67b8ff;
+
+  --text-primary: #ffffff;
+  --text-secondary: #c5cfdb;
+  --text-muted: #8794a8;
+  --text-disabled: #5d6778;
+
+  --border-color: rgba(255,255,255,.08);
+  --border-strong: rgba(255,255,255,.18);
+
+  /* ========= Founder Theme ========= */
+  --egypt-gold: #d4af37;
+  --nile-cyan: #00d9ff;
+  --desert-sand: #d9c59c;
+  --pyramid-shadow: #4b3d24;
+
+  /* ========= Glass ========= */
+  --glass-bg: rgba(255,255,255,.05);
+  --glass-border: rgba(255,255,255,.08);
+  --glass-blur: blur(18px);
+
+  /* ========= Shadows ========= */
+  --shadow-sm: 0 4px 12px rgba(0,0,0,.20);
+  --shadow-md: 0 12px 30px rgba(0,0,0,.35);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.50);
+
+  --glow-primary: 0 0 24px rgba(0,229,195,.45);
+  --glow-gold: 0 0 24px rgba(245,196,81,.35);
+
+  /* ========= Radius ========= */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 999px;
+
+  /* ========= Typography ========= */
+  --font-family:
+    Inter,
+    "IBM Plex Sans Arabic",
+    system-ui,
+    sans-serif;
+
+  --font-xs: .75rem;
+  --font-sm: .875rem;
+  --font-md: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.4rem;
+  --font-2xl: 2rem;
+  --font-3xl: 3rem;
+  --font-4xl: 4rem;
+
+  /* ========= Spacing ========= */
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* ========= Layout ========= */
+  --sidebar-width: 290px;
+  --sidebar-collapsed: 88px;
+  --topbar-height: 76px;
+  --content-max: 1700px;
+
+  /* ========= Motion ========= */
+  --transition-fast: .15s ease;
+  --transition-normal: .3s ease;
+  --transition-slow: .5s ease;
+
+  /* ========= Z Index ========= */
+  --z-dropdown: 100;
+  --z-sidebar: 300;
+  --z-header: 500;
+  --z-modal: 1000;
+  --z-toast: 2000;
+}

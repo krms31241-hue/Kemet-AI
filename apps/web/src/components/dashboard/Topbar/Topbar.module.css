@@ -1,0 +1,127 @@
+.topbar{
+  height:82px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 28px;
+
+  background:#0d0d10;
+
+  border-bottom:1px solid rgba(212,170,74,.15);
+}
+
+.searchBox{
+  width:560px;
+  height:50px;
+
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  padding:0 18px;
+
+  border-radius:16px;
+
+  background:#151518;
+
+  border:1px solid rgba(212,170,74,.25);
+}
+
+.searchBox svg{
+  color:#d4aa4a;
+}
+
+.searchBox input{
+  flex:1;
+
+  background:transparent;
+  border:none;
+  outline:none;
+
+  color:#fff;
+}
+
+.searchBox input::placeholder{
+  color:#8d8d92;
+}
+
+.searchBox kbd{
+  padding:4px 8px;
+
+  border-radius:8px;
+
+  background:#222;
+
+  color:#d4aa4a;
+
+  font-size:12px;
+}
+
+.actions{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.iconButton{
+  height:46px;
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+
+  padding:0 16px;
+
+  background:#151518;
+
+  color:#fff;
+
+  border:1px solid rgba(212,170,74,.25);
+
+  border-radius:14px;
+
+  cursor:pointer;
+}
+
+.profile{
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  padding:8px 16px;
+
+  border-radius:16px;
+
+  background:#151518;
+
+  border:1px solid rgba(212,170,74,.25);
+}
+
+.avatar{
+  width:46px;
+  height:46px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:50%;
+
+  background:#d4aa4a;
+
+  color:#111;
+
+  font-weight:700;
+}
+
+.profile h4{
+  color:#fff;
+  font-size:15px;
+}
+
+.profile p{
+  color:#9a9a9a;
+  font-size:12px;
+}

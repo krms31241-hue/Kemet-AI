@@ -1,0 +1,22 @@
+.card{
+  background:var(--color-card);
+  border:1px solid var(--border-color);
+  backdrop-filter:var(--glass-blur);
+
+  border-radius:var(--radius-lg);
+
+  padding:var(--space-5);
+
+  box-shadow:var(--shadow-md);
+
+  transition:
+    background var(--transition-normal),
+    transform var(--transition-normal),
+    border-color var(--transition-normal);
+}
+
+.card:hover{
+  background:var(--color-card-hover);
+  border-color:var(--border-strong);
+  transform:translateY(-2px);
+}

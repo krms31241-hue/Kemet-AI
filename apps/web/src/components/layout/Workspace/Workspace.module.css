@@ -1,0 +1,41 @@
+.workspace{
+  flex:1;
+
+  display:grid;
+
+  grid-template-columns:1fr 340px;
+
+  gap:24px;
+
+  padding:24px;
+
+  background:#080808;
+
+  overflow:hidden;
+}
+
+.main{
+  display:flex;
+  flex-direction:column;
+
+  gap:24px;
+
+  overflow:auto;
+}
+
+.bottom{
+  display:grid;
+
+  grid-template-columns:1.4fr .9fr;
+
+  gap:24px;
+
+  min-height:600px;
+}
+
+.left{
+  display:flex;
+  flex-direction:column;
+
+  gap:24px;
+}

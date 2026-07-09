@@ -1,0 +1,40 @@
+.editor{
+  background:#111114;
+  border:1px solid rgba(212,170,74,.18);
+  border-radius:20px;
+  overflow:hidden;
+}
+
+.header{
+  height:56px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 20px;
+
+  border-bottom:1px solid rgba(212,170,74,.15);
+}
+
+.header h2{
+  color:#fff;
+  font-size:18px;
+}
+
+.header span{
+  color:#d4aa4a;
+  font-size:13px;
+}
+
+.code{
+  margin:0;
+  padding:24px;
+
+  color:#d7d7d7;
+
+  font-size:14px;
+  line-height:1.8;
+
+  overflow:auto;
+}

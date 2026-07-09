@@ -1,0 +1,46 @@
+.logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logoIcon{
+  width:52px;
+  height:52px;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  border-radius:14px;
+
+  background:linear-gradient(
+      135deg,
+      var(--color-primary),
+      var(--color-accent),
+      var(--color-secondary)
+  );
+
+  color:#06070a;
+  font-weight:900;
+  font-size:22px;
+
+  box-shadow:var(--glow-primary);
+}
+
+.compact{
+  width:42px;
+  height:42px;
+  font-size:18px;
+}
+
+.title{
+  color:var(--text-primary);
+  font-size:22px;
+  line-height:1.2;
+}
+
+.subtitle{
+  color:var(--text-muted);
+  font-size:13px;
+}

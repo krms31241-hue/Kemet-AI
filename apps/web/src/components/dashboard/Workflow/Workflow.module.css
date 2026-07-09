@@ -1,0 +1,71 @@
+.workflow{
+  background:#111114;
+
+  border:1px solid rgba(212,170,74,.18);
+
+  border-radius:20px;
+
+  padding:24px;
+}
+
+.header{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  margin-bottom:24px;
+}
+
+.header h2{
+  color:#fff;
+
+  font-size:20px;
+}
+
+.header span{
+  color:#d4aa4a;
+
+  font-size:13px;
+}
+
+.canvas{
+  display:grid;
+
+  grid-template-columns:repeat(4,1fr);
+
+  gap:18px;
+}
+
+.node{
+  min-height:90px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  text-align:center;
+
+  border-radius:16px;
+
+  background:#18181c;
+
+  border:1px solid rgba(212,170,74,.20);
+
+  color:#f5f5f5;
+
+  font-weight:600;
+
+  transition:.25s;
+}
+
+.node:hover{
+  border-color:#d4aa4a;
+
+  transform:translateY(-2px);
+
+  box-shadow:0 0 16px rgba(212,170,74,.15);
+}
