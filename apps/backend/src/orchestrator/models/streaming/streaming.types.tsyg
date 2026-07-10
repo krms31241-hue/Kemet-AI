@@ -1,0 +1,46 @@
+/**
+ * streaming.types.ts
+ *
+ * The base `Provider` interface (see `providers/provider.ts`) is
+ * intentionally request/response only. Providers that can stream tokens
+ * additionally implement `StreamingCapableProvider`, discovered at runtime
+ * via {@link isStreamingCapable} rather than a static type assertion, so
+ * routing can safely fall back to non-streaming providers.
+ */
+
+import type { ChatRequest, ChatResponse } from "../providers/provider.types.js";
+import type { Provider } from "../providers/provider.js";
+
+export interface StreamChunk {
+  /** Incremental text produced since the previous chunk. */
+  readonly delta: string;
+  /** Whether this is the final chunk of the stream. */
+  readonly done: boolean;
+  /** Provider-reported reason streaming ended (e.g. "stop", "length"). Present only on the final chunk. */
+  readonly finishReason?: string;
+}
+
+export interface StreamingCapableProvider extends Provider {
+  chatStream(request: ChatRequest): AsyncIterable<StreamChunk>;
+}
+
+/**
+ * Runtime type guard. A provider is treated as streaming-capable only if
+ * it both advertises the `"streaming"` capability AND exposes a
+ * `chatStream` method, guarding against providers that declare the
+ * capability but haven't implemented it yet.
+ */
+export function isStreamingCapable(provider: Provider): provider is StreamingCapableProvider {
+  return (
+    provider.capabilities.includes("streaming") &&
+    typeof (provider as Partial<StreamingCapableProvider>).chatStream === "function"
+  );
+}
+
+/** Result of fully draining a stream: the assembled response plus the raw chunks observed. */
+export interface AggregatedStreamResult {
+  readonly response: ChatResponse;
+  readonly chunkCount: number;
+}
+
+export type StreamChunkListener = (chunk: StreamChunk) => void | Promise<void>;
