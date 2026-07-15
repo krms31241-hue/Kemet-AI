@@ -8,26 +8,26 @@
  */
 
 import type { ProviderUsage } from "../providers/provider.types.js";
-import type { CostEstimator, ModelPricing } from "./usage.types.js";
+import type { CostEstimator, UsagePricing } from "./usage.types.js";
 
 function pricingKey(providerId: string, model: string): string {
   return `${providerId}:${model}`;
 }
 
 export class TablePricingCostEstimator implements CostEstimator {
-  private readonly pricing = new Map<string, ModelPricing>();
+  private readonly pricing = new Map<string, UsagePricing>();
 
-  constructor(initialPricing: Readonly<Record<string, ModelPricing>> = {}) {
+  constructor(initialPricing: Readonly<Record<string, UsagePricing>> = {}) {
     for (const [key, value] of Object.entries(initialPricing)) {
       this.pricing.set(key, value);
     }
   }
 
-  public setPricing(providerId: string, model: string, pricing: ModelPricing): void {
+  public setPricing(providerId: string, model: string, pricing: UsagePricing): void {
     this.pricing.set(pricingKey(providerId, model), pricing);
   }
 
-  public getPricing(providerId: string, model: string): ModelPricing | undefined {
+  public getPricing(providerId: string, model: string): UsagePricing | undefined {
     return this.pricing.get(pricingKey(providerId, model));
   }
 

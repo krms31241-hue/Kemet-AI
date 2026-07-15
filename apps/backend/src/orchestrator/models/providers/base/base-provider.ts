@@ -19,9 +19,9 @@ import {
   MetricsRecorder,
   RequestInterceptor,
   ResponseInterceptor,
-} from './http-client.js';
-import { normalizeError, ProviderError } from './provider-error.js';
-import { RetryPolicy } from './retry-policy.js';
+} from "./http-client.js";
+import { normalizeError, ProviderError } from "./provider-error.js";
+import { RetryPolicy } from "./retry-policy.js";
 
 const NOOP_LOGGER: Logger = {
   debug: () => undefined,
@@ -40,6 +40,12 @@ const NOOP_METRICS: MetricsRecorder = {
  * via the generic `TConfig` parameter on {@link BaseProvider}.
  */
 export interface ProviderConfig {
+  /**
+   * Stable, unique identifier for this provider (e.g. `"openai"`,
+   * `"anthropic"`), propagated into the `HttpClient`, logs, metrics, and
+   * normalized errors.
+   */
+  readonly providerName: string;
   readonly baseUrl: string;
   readonly apiKey?: string;
   readonly timeoutMs?: number;
@@ -52,7 +58,7 @@ export interface ProviderConfig {
   readonly fetchImpl?: typeof fetch;
 }
 
-export type ProviderRequestOptions = Omit<HttpRequestOptions, 'context'>;
+export type ProviderRequestOptions = Omit<HttpRequestOptions, "context">;
 
 /** Machine-readable capability descriptor a provider can advertise to the orchestrator. */
 export interface ProviderCapabilities {
@@ -63,17 +69,21 @@ export interface ProviderCapabilities {
 }
 
 /**
- * Abstract base class for all model providers. Concrete subclasses must
- * supply identity (`getProviderName`), health checking, and capability
- * reporting, and are expected to implement their own domain methods (e.g.
- * `complete`, `stream`, `embed`) on top of the protected `execute` helper.
+ * Abstract base class for all model providers. Concrete subclasses supply
+ * their identity via `config.providerName` (not by overriding a virtual
+ * method), must implement health checking and capability reporting, and
+ * are expected to implement their own domain methods (e.g. `complete`,
+ * `stream`, `embed`) on top of the protected `execute` helper.
  *
  * Subclasses provide authentication by overriding {@link getAuthHeaders};
  * the default implementation supplies no auth headers, so a provider with
  * no authentication requirement needs no override at all.
  */
-export abstract class BaseProvider<TConfig extends ProviderConfig = ProviderConfig> implements AuthProvider {
+export abstract class BaseProvider<
+  TConfig extends ProviderConfig = ProviderConfig,
+> implements AuthProvider {
   protected readonly config: TConfig;
+  protected readonly providerName: string;
   protected readonly httpClient: HttpClient;
   protected readonly logger: Logger;
   protected readonly metrics: MetricsRecorder;
@@ -81,11 +91,12 @@ export abstract class BaseProvider<TConfig extends ProviderConfig = ProviderConf
   protected constructor(config: TConfig) {
     this.assertValidConfig(config);
     this.config = config;
+    this.providerName = config.providerName;
     this.logger = config.logger ?? NOOP_LOGGER;
     this.metrics = config.metrics ?? NOOP_METRICS;
 
     this.httpClient = new HttpClient({
-      providerName: this.getProviderName(),
+      providerName: this.providerName,
       baseUrl: config.baseUrl,
       timeoutMs: config.timeoutMs,
       retryPolicy: config.retryPolicy,
@@ -99,8 +110,10 @@ export abstract class BaseProvider<TConfig extends ProviderConfig = ProviderConf
     });
   }
 
-  /** Stable, unique identifier for this provider (e.g. `"openai"`, `"anthropic"`). */
-  public abstract getProviderName(): string;
+  /** Stable, unique identifier for this provider, as supplied via `config.providerName`. */
+  public getProviderName(): string {
+    return this.providerName;
+  }
 
   /** Declares what this provider supports so the orchestrator can route requests correctly. */
   public abstract getCapabilities(): ProviderCapabilities;
@@ -136,17 +149,23 @@ export abstract class BaseProvider<TConfig extends ProviderConfig = ProviderConf
    * the shared `HttpClient`, ensuring every provider gets consistent
    * logging, metrics, and error normalization for free.
    */
-  protected async execute<T>(path: string, options: ProviderRequestOptions = {}): Promise<HttpResponse<T>> {
+  protected async execute<T>(
+    path: string,
+    options: ProviderRequestOptions = {},
+  ): Promise<HttpResponse<T>> {
     this.beforeRequest(path, options);
     try {
       const response = await this.httpClient.request<T>(path, {
         ...options,
-        context: { providerName: this.getProviderName() },
+        context: { providerName: this.providerName },
       });
       this.afterResponse(path, response);
       return response;
     } catch (rawError) {
-      const error = normalizeError(rawError, { providerName: this.getProviderName(), path });
+      const error = normalizeError(rawError, {
+        providerName: this.providerName,
+        path,
+      });
       this.onError(path, error);
       throw error;
     }
@@ -154,15 +173,15 @@ export abstract class BaseProvider<TConfig extends ProviderConfig = ProviderConf
 
   /** Lifecycle hook invoked immediately before dispatch. Override to add tracing spans, etc. */
   protected beforeRequest(path: string, options: ProviderRequestOptions): void {
-    this.logger.debug(`${this.getProviderName()}: dispatching request`, {
+    this.logger.debug(`${this.providerName}: dispatching request`, {
       path,
-      method: options.method ?? 'GET',
+      method: options.method ?? "GET",
     });
   }
 
   /** Lifecycle hook invoked after a successful response is received and parsed. */
   protected afterResponse<T>(path: string, response: HttpResponse<T>): void {
-    this.logger.debug(`${this.getProviderName()}: received response`, {
+    this.logger.debug(`${this.providerName}: received response`, {
       path,
       status: response.status,
       attempts: response.attempts,
@@ -172,7 +191,7 @@ export abstract class BaseProvider<TConfig extends ProviderConfig = ProviderConf
 
   /** Lifecycle hook invoked when a request ultimately fails (after retries are exhausted). */
   protected onError(path: string, error: ProviderError): void {
-    this.logger.error(`${this.getProviderName()}: request failed`, {
+    this.logger.error(`${this.providerName}: request failed`, {
       path,
       code: error.code,
       statusCode: error.statusCode,
@@ -181,16 +200,31 @@ export abstract class BaseProvider<TConfig extends ProviderConfig = ProviderConf
   }
 
   private assertValidConfig(config: TConfig): void {
-    if (!config || typeof config.baseUrl !== 'string' || config.baseUrl.trim().length === 0) {
-      throw new RangeError(`${this.constructor.name}: a non-empty "baseUrl" must be provided in the config`);
+    if (
+      !config ||
+      typeof config.providerName !== "string" ||
+      config.providerName.trim().length === 0
+    ) {
+      throw new RangeError(
+        `${this.constructor.name}: a non-empty "providerName" must be provided in the config`,
+      );
+    }
+    if (
+      typeof config.baseUrl !== "string" ||
+      config.baseUrl.trim().length === 0
+    ) {
+      throw new RangeError(
+        `${this.constructor.name}: a non-empty "baseUrl" must be provided in the config`,
+      );
     }
 
     try {
       // eslint-disable-next-line no-new
       new URL(config.baseUrl);
     } catch {
-      throw new RangeError(`${this.constructor.name}: "baseUrl" must be a valid absolute URL, received "${config.baseUrl}"`);
+      throw new RangeError(
+        `${this.constructor.name}: "baseUrl" must be a valid absolute URL, received "${config.baseUrl}"`,
+      );
     }
   }
 }
-

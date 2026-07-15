@@ -43,7 +43,7 @@ export interface CostEstimator {
 }
 
 /** Per-1K-token pricing for a given provider/model pair, in USD. */
-export interface ModelPricing {
+export interface UsagePricing {
   readonly promptPricePer1k: number;
   readonly completionPricePer1k: number;
 }
