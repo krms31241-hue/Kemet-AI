@@ -1,25 +1,36 @@
 import { prisma } from "../database/prisma.js";
 export class WorkflowRepository {
     async create(data) {
-        return prisma.workflow.create({ data });
+        return prisma.workflow.create({
+            data,
+        });
     }
     async findById(id) {
-        return prisma.workflow.findUnique({ where: { id } });
+        return prisma.workflow.findUnique({
+            where: { id },
+        });
     }
     async findByProject(projectId) {
         return prisma.workflow.findMany({
-            where: { projectId },
-            orderBy: { createdAt: "desc" },
+            where: {
+                projectId,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
         });
     }
     async update(id, data) {
         const exists = await prisma.workflow.findUnique({
             where: { id },
         });
-        if (!exists)
+        if (!exists) {
             return null;
+        }
         return prisma.workflow.update({
-            where: { id },
+            where: {
+                id,
+            },
             data,
         });
     }
@@ -27,10 +38,13 @@ export class WorkflowRepository {
         const exists = await prisma.workflow.findUnique({
             where: { id },
         });
-        if (!exists)
+        if (!exists) {
             return false;
+        }
         await prisma.workflow.delete({
-            where: { id },
+            where: {
+                id,
+            },
         });
         return true;
     }

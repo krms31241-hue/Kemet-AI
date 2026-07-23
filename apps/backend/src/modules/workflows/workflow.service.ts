@@ -11,7 +11,9 @@ export class WorkflowService {
   async create(data: CreateWorkflowInput) {
     const workflow =
       await workflowRepository.create({
-        ...data,
+        projectId: data.projectId,
+        name: data.name,
+        description: data.description ?? null,
         nodes: data.nodes as Prisma.InputJsonValue,
         edges: data.edges as Prisma.InputJsonValue,
       });
@@ -43,16 +45,31 @@ export class WorkflowService {
       throw new Error("Workflow not found");
     }
 
+    const updateData: Prisma.WorkflowUncheckedUpdateInput = {};
+
+    if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+
+    if (data.description !== undefined) {
+      updateData.description = data.description;
+    }
+
+    if (data.nodes !== undefined) {
+      updateData.nodes =
+        data.nodes as Prisma.InputJsonValue;
+    }
+
+    if (data.edges !== undefined) {
+      updateData.edges =
+        data.edges as Prisma.InputJsonValue;
+    }
+
     const updated =
-      await workflowRepository.update(id, {
-        ...data,
-        ...(data.nodes && {
-          nodes: data.nodes as Prisma.InputJsonValue,
-        }),
-        ...(data.edges && {
-          edges: data.edges as Prisma.InputJsonValue,
-        }),
-      });
+      await workflowRepository.update(
+        id,
+        updateData,
+      );
 
     return {
       success: true,
