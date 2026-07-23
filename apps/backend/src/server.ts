@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import * as helmet from "helmet";
+import helmet from "helmet";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 
@@ -11,13 +11,9 @@ export function createHttpServer() {
   const app = express();
 
   app.use(cors());
-
-  app.use(helmet.default());
-
+  app.use(helmet());
   app.use(compression());
-
   app.use(express.json());
-
   app.use(cookieParser());
 
   app.use("/api/v1", apiRouter);
