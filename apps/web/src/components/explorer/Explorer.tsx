@@ -1,32 +1,34 @@
-const files = [
-  "src",
-  "components",
-  "pages",
-  "hooks",
-  "services",
-  "store",
-  "App.tsx",
-  "main.tsx",
-  "package.json"
-];
-
 export default function Explorer() {
   return (
-    <aside className="bg-zinc-900 border-r border-zinc-800 h-full overflow-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 font-semibold">
+    <aside className="w-72 border-r border-zinc-800 bg-[#111113]">
+
+      <div className="border-b border-zinc-800 p-4 text-sm font-semibold">
         Explorer
       </div>
 
-      <div className="p-2">
-        {files.map((file) => (
+      <div className="space-y-1 p-3">
+
+        {[
+          "src",
+          "components",
+          "layouts",
+          "pages",
+          "hooks",
+          "store",
+          "services",
+          "assets",
+          "public",
+        ].map((item) => (
           <div
-            key={file}
-            className="px-3 py-2 rounded hover:bg-zinc-800 cursor-pointer text-sm"
+            key={item}
+            className="cursor-pointer rounded px-2 py-2 text-sm hover:bg-zinc-800"
           >
-            {file}
+            📁 {item}
           </div>
         ))}
+
       </div>
+
     </aside>
   );
 }

@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import Sidebar from "../../components/sidebar/Sidebar";
 import Topbar from "../../components/topbar/Topbar";
 import Explorer from "../../components/explorer/Explorer";
@@ -7,43 +5,49 @@ import Editor from "../../components/editor/Editor";
 import Chat from "../../components/chat/Chat";
 import Terminal from "../../components/terminal/Terminal";
 import Preview from "../../components/preview/Preview";
+import WorkflowPanel from "../../components/workflow/WorkflowPanel";
+import AgentsPanel from "../../components/agents/AgentsPanel";
 
-type Props = {
-  children?: ReactNode;
-};
-
-export default function WorkspaceLayout({ children }: Props) {
+export default function WorkspaceLayout() {
   return (
-    <div className="h-screen w-screen bg-zinc-950 text-white overflow-hidden">
-
-      <div className="grid h-full grid-cols-[70px_280px_1fr_360px]">
+    <div className="h-screen w-screen overflow-hidden bg-[#09090b] text-white">
+      <div className="flex h-full">
 
         <Sidebar />
 
-        <Explorer />
-
-        <div className="grid grid-rows-[56px_1fr_220px]">
+        <div className="flex flex-1 flex-col">
 
           <Topbar />
 
-          <div className="overflow-hidden">
-            {children ?? <Editor />}
+          <div className="flex flex-1 overflow-hidden">
+
+            <Explorer />
+
+            <div className="flex flex-1 flex-col">
+
+              <Editor />
+
+              <Terminal />
+
+            </div>
+
+            <div className="flex w-[430px] flex-col border-l border-zinc-800">
+
+              <Chat />
+
+              <WorkflowPanel />
+
+              <AgentsPanel />
+
+              <Preview />
+
+            </div>
+
           </div>
-
-          <Terminal />
-
-        </div>
-
-        <div className="grid grid-rows-[1fr_320px]">
-
-          <Chat />
-
-          <Preview />
 
         </div>
 
       </div>
-
     </div>
   );
 }
