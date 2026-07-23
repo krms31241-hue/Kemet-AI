@@ -1,37 +1,38 @@
-import crypto from "node:crypto";
+import { prisma } from "../database/prisma.js";
 export class WorkflowRepository {
-    workflows = new Map();
     async create(data) {
-        const workflow = {
-            ...data,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        this.workflows.set(workflow.id, workflow);
-        return workflow;
+        return prisma.workflow.create({ data });
     }
     async findById(id) {
-        return this.workflows.get(id) ?? null;
+        return prisma.workflow.findUnique({ where: { id } });
     }
     async findByProject(projectId) {
-        return [...this.workflows.values()].filter((workflow) => workflow.projectId === projectId);
+        return prisma.workflow.findMany({
+            where: { projectId },
+            orderBy: { createdAt: "desc" },
+        });
     }
     async update(id, data) {
-        const workflow = await this.findById(id);
-        if (!workflow) {
+        const exists = await prisma.workflow.findUnique({
+            where: { id },
+        });
+        if (!exists)
             return null;
-        }
-        const updated = {
-            ...workflow,
-            ...data,
-            updatedAt: new Date(),
-        };
-        this.workflows.set(id, updated);
-        return updated;
+        return prisma.workflow.update({
+            where: { id },
+            data,
+        });
     }
     async delete(id) {
-        return this.workflows.delete(id);
+        const exists = await prisma.workflow.findUnique({
+            where: { id },
+        });
+        if (!exists)
+            return false;
+        await prisma.workflow.delete({
+            where: { id },
+        });
+        return true;
     }
 }
 export const workflowRepository = new WorkflowRepository();

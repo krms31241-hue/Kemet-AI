@@ -1,44 +1,54 @@
-import crypto from "node:crypto";
+import { prisma } from "../database/prisma.js";
 export class ProjectRepository {
-    projects = new Map();
     async create(data) {
-        const project = {
-            ...data,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        this.projects.set(project.id, project);
-        return project;
+        return prisma.project.create({
+            data,
+        });
     }
     async findById(id) {
-        return this.projects.get(id) ?? null;
+        return prisma.project.findUnique({
+            where: { id },
+        });
     }
     async findByOwner(ownerId) {
-        return [...this.projects.values()].filter((project) => project.ownerId === ownerId);
+        return prisma.project.findMany({
+            where: { ownerId },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
     }
     async findByIdAndOwner(id, ownerId) {
-        const project = await this.findById(id);
-        if (!project || project.ownerId !== ownerId) {
-            return null;
-        }
-        return project;
+        return prisma.project.findFirst({
+            where: {
+                id,
+                ownerId,
+            },
+        });
     }
     async update(id, data) {
-        const project = await this.findById(id);
-        if (!project) {
+        const exists = await prisma.project.findUnique({
+            where: { id },
+        });
+        if (!exists) {
             return null;
         }
-        const updated = {
-            ...project,
-            ...data,
-            updatedAt: new Date(),
-        };
-        this.projects.set(id, updated);
-        return updated;
+        return prisma.project.update({
+            where: { id },
+            data,
+        });
     }
     async delete(id) {
-        return this.projects.delete(id);
+        const exists = await prisma.project.findUnique({
+            where: { id },
+        });
+        if (!exists) {
+            return false;
+        }
+        await prisma.project.delete({
+            where: { id },
+        });
+        return true;
     }
 }
 export const projectRepository = new ProjectRepository();

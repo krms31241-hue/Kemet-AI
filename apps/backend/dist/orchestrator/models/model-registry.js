@@ -1,3 +1,4 @@
+import { providerRegistry } from "./providers/provider-registry.js";
 /**
  * model-registry.ts
  *
@@ -59,3 +60,7 @@ export class ModelRegistry {
         });
     }
 }
+/**
+ * Global singleton ModelRegistry used across the application.
+ */
+export const modelRegistry = new ModelRegistry(providerRegistry);

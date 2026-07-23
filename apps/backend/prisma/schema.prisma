@@ -8,47 +8,67 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  username     String    @unique
+  id           String @id @default(cuid())
+  email        String @unique
+  username     String @unique
   passwordHash String
 
-  firstName    String?
-  lastName     String?
-  avatarUrl    String?
+  firstName String?
+  lastName  String?
+  avatarUrl String?
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  projects     Project[]
+  projects Project[]
 }
 
 model Project {
-  id          String    @id @default(cuid())
+  id String @id @default(cuid())
 
   name        String
   description String?
 
-  ownerId     String
-  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+  owner   User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  agents      Agent[]
+  agents    Agent[]
+  workflows Workflow[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Agent {
-  id          String    @id @default(cuid())
+  id String @id @default(cuid())
+
+  name           String
+  description    String?
+  systemPrompt   String
+  provider       String
+  model          String
+  temperature    Float
+  maxTokens      Int
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Workflow {
+  id String @id @default(cuid())
 
   name        String
   description String?
 
-  model       String
+  nodes Json
+  edges Json
 
-  projectId   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

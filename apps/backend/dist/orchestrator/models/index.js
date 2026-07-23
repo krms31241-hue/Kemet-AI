@@ -19,3 +19,4 @@ export * from "./router/index.js";
 export * from "./events/index.js";
 export * from "./cache/index.js";
 export * from "./runtime/index.js";
+export * from "./runtime-bootstrap.js";

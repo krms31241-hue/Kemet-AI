@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { workflowRepository } from "../../repositories/workflow.repository.js";
 
 import type {
@@ -8,7 +10,11 @@ import type {
 export class WorkflowService {
   async create(data: CreateWorkflowInput) {
     const workflow =
-      await workflowRepository.create(data);
+      await workflowRepository.create({
+        ...data,
+        nodes: data.nodes as Prisma.InputJsonValue,
+        edges: data.edges as Prisma.InputJsonValue,
+      });
 
     return {
       success: true,
@@ -38,7 +44,15 @@ export class WorkflowService {
     }
 
     const updated =
-      await workflowRepository.update(id, data);
+      await workflowRepository.update(id, {
+        ...data,
+        ...(data.nodes && {
+          nodes: data.nodes as Prisma.InputJsonValue,
+        }),
+        ...(data.edges && {
+          edges: data.edges as Prisma.InputJsonValue,
+        }),
+      });
 
     return {
       success: true,

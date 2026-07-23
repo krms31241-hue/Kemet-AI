@@ -1,53 +1,55 @@
-import crypto from "node:crypto";
+import { prisma } from "../database/prisma.js";
 export class UserRepository {
-    users = new Map();
     async findById(id) {
-        return this.users.get(id) ?? null;
+        return prisma.user.findUnique({
+            where: { id },
+        });
     }
     async findByEmail(email) {
-        for (const user of this.users.values()) {
-            if (user.email === email) {
-                return user;
-            }
-        }
-        return null;
+        return prisma.user.findUnique({
+            where: { email },
+        });
     }
     async findByUsername(username) {
-        for (const user of this.users.values()) {
-            if (user.username === username) {
-                return user;
-            }
-        }
-        return null;
+        return prisma.user.findUnique({
+            where: { username },
+        });
     }
     async create(user) {
-        const entity = {
-            ...user,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        this.users.set(entity.id, entity);
-        return entity;
+        return prisma.user.create({
+            data: user,
+        });
     }
     async update(id, data) {
-        const user = await this.findById(id);
-        if (!user) {
+        const exists = await prisma.user.findUnique({
+            where: { id },
+        });
+        if (!exists) {
             return null;
         }
-        const updated = {
-            ...user,
-            ...data,
-            updatedAt: new Date(),
-        };
-        this.users.set(id, updated);
-        return updated;
+        return prisma.user.update({
+            where: { id },
+            data,
+        });
     }
     async delete(id) {
-        return this.users.delete(id);
+        const exists = await prisma.user.findUnique({
+            where: { id },
+        });
+        if (!exists) {
+            return false;
+        }
+        await prisma.user.delete({
+            where: { id },
+        });
+        return true;
     }
     async findAll() {
-        return [...this.users.values()];
+        return prisma.user.findMany({
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
     }
 }
 export const userRepository = new UserRepository();

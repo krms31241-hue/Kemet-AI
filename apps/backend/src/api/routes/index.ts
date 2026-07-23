@@ -3,6 +3,7 @@ import { Router } from "express";
 import authRouter from "../../modules/auth/auth.routes.js";
 import { projectRouter } from "../../modules/projects/index.js";
 import { agentRouter } from "../../modules/agents/index.js";
+import { workflowRouter } from "../../modules/workflows/index.js";
 
 const apiRouter = Router();
 
@@ -17,9 +18,8 @@ apiRouter.get("/health", (_, res) => {
 });
 
 apiRouter.use("/auth", authRouter);
-
 apiRouter.use("/projects", projectRouter);
-
 apiRouter.use("/agents", agentRouter);
+apiRouter.use("/workflows", workflowRouter);
 
 export { apiRouter };

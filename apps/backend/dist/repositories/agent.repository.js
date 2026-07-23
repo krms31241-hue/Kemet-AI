@@ -1,37 +1,46 @@
-import crypto from "node:crypto";
+import { prisma } from "../database/prisma.js";
 export class AgentRepository {
-    agents = new Map();
     async create(data) {
-        const agent = {
-            ...data,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        this.agents.set(agent.id, agent);
-        return agent;
+        return prisma.agent.create({
+            data,
+        });
     }
     async findById(id) {
-        return this.agents.get(id) ?? null;
+        return prisma.agent.findUnique({
+            where: { id },
+        });
     }
     async findByProject(projectId) {
-        return [...this.agents.values()].filter((agent) => agent.projectId === projectId);
+        return prisma.agent.findMany({
+            where: { projectId },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
     }
     async update(id, data) {
-        const agent = await this.findById(id);
-        if (!agent) {
+        const exists = await prisma.agent.findUnique({
+            where: { id },
+        });
+        if (!exists) {
             return null;
         }
-        const updated = {
-            ...agent,
-            ...data,
-            updatedAt: new Date(),
-        };
-        this.agents.set(id, updated);
-        return updated;
+        return prisma.agent.update({
+            where: { id },
+            data,
+        });
     }
     async delete(id) {
-        return this.agents.delete(id);
+        const exists = await prisma.agent.findUnique({
+            where: { id },
+        });
+        if (!exists) {
+            return false;
+        }
+        await prisma.agent.delete({
+            where: { id },
+        });
+        return true;
     }
 }
 export const agentRepository = new AgentRepository();

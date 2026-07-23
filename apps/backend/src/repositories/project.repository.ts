@@ -1,83 +1,84 @@
-import crypto from "node:crypto";
+import { prisma } from "../database/prisma.js";
 
 export interface ProjectEntity {
   id: string;
-
   ownerId: string;
-
   name: string;
-
-  description?: string;
-
+  description?: string | null;
   createdAt: Date;
-
   updatedAt: Date;
 }
 
 export class ProjectRepository {
-  private projects = new Map<string, ProjectEntity>();
-
   async create(
     data: Omit<ProjectEntity, "id" | "createdAt" | "updatedAt">,
-  ) {
-    const project: ProjectEntity = {
-      ...data,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.projects.set(project.id, project);
-
-    return project;
+  ): Promise<ProjectEntity> {
+    return prisma.project.create({
+      data,
+    });
   }
 
-  async findById(id: string) {
-    return this.projects.get(id) ?? null;
+  async findById(id: string): Promise<ProjectEntity | null> {
+    return prisma.project.findUnique({
+      where: { id },
+    });
   }
 
-  async findByOwner(ownerId: string) {
-    return [...this.projects.values()].filter(
-      (project) => project.ownerId === ownerId,
-    );
+  async findByOwner(
+    ownerId: string,
+  ): Promise<ProjectEntity[]> {
+    return prisma.project.findMany({
+      where: { ownerId },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
   }
 
   async findByIdAndOwner(
     id: string,
     ownerId: string,
-  ) {
-    const project = await this.findById(id);
-
-    if (!project || project.ownerId !== ownerId) {
-      return null;
-    }
-
-    return project;
+  ): Promise<ProjectEntity | null> {
+    return prisma.project.findFirst({
+      where: {
+        id,
+        ownerId,
+      },
+    });
   }
 
   async update(
     id: string,
     data: Partial<Omit<ProjectEntity, "id" | "ownerId">>,
-  ) {
-    const project = await this.findById(id);
+  ): Promise<ProjectEntity | null> {
+    const exists = await prisma.project.findUnique({
+      where: { id },
+    });
 
-    if (!project) {
+    if (!exists) {
       return null;
     }
 
-    const updated: ProjectEntity = {
-      ...project,
-      ...data,
-      updatedAt: new Date(),
-    };
-
-    this.projects.set(id, updated);
-
-    return updated;
+    return prisma.project.update({
+      where: { id },
+      data,
+    });
   }
 
-  async delete(id: string) {
-    return this.projects.delete(id);
+  async delete(id: string): Promise<boolean> {
+    const exists = await prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!exists) {
+      return false;
+    }
+
+    await prisma.project.delete({
+      where: { id },
+    });
+
+    return true;
   }
 }
 

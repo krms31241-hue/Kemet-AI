@@ -1,4 +1,5 @@
-import crypto from "node:crypto";
+import { prisma } from "../database/prisma.js";
+import type { Prisma } from "@prisma/client";
 
 export interface WorkflowEntity {
   id: string;
@@ -6,79 +7,62 @@ export interface WorkflowEntity {
   projectId: string;
 
   name: string;
+  description?: string | null;
 
-  description?: string;
-
-  nodes: unknown[];
-
-  edges: unknown[];
+  nodes: Prisma.JsonValue;
+  edges: Prisma.JsonValue;
 
   createdAt: Date;
-
   updatedAt: Date;
 }
 
 export class WorkflowRepository {
-  private workflows = new Map<string, WorkflowEntity>();
-
   async create(
-    data: Omit<
-      WorkflowEntity,
-      "id" | "createdAt" | "updatedAt"
-    >,
-  ) {
-    const workflow: WorkflowEntity = {
-      ...data,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.workflows.set(workflow.id, workflow);
-
-    return workflow;
+    data: Omit<WorkflowEntity, "id" | "createdAt" | "updatedAt">,
+  ): Promise<WorkflowEntity> {
+    return prisma.workflow.create({ data });
   }
 
-  async findById(id: string) {
-    return this.workflows.get(id) ?? null;
+  async findById(id: string): Promise<WorkflowEntity | null> {
+    return prisma.workflow.findUnique({ where: { id } });
   }
 
-  async findByProject(projectId: string) {
-    return [...this.workflows.values()].filter(
-      (workflow) => workflow.projectId === projectId,
-    );
+  async findByProject(projectId: string): Promise<WorkflowEntity[]> {
+    return prisma.workflow.findMany({
+      where: { projectId },
+      orderBy: { createdAt: "desc" },
+    });
   }
 
   async update(
     id: string,
-    data: Partial<
-      Omit<
-        WorkflowEntity,
-        "id" | "projectId"
-      >
-    >,
-  ) {
-    const workflow = await this.findById(id);
+    data: Partial<Omit<WorkflowEntity, "id" | "projectId">>,
+  ): Promise<WorkflowEntity | null> {
+    const exists = await prisma.workflow.findUnique({
+      where: { id },
+    });
 
-    if (!workflow) {
-      return null;
-    }
+    if (!exists) return null;
 
-    const updated: WorkflowEntity = {
-      ...workflow,
-      ...data,
-      updatedAt: new Date(),
-    };
-
-    this.workflows.set(id, updated);
-
-    return updated;
+    return prisma.workflow.update({
+      where: { id },
+      data,
+    });
   }
 
-  async delete(id: string) {
-    return this.workflows.delete(id);
+  async delete(id: string): Promise<boolean> {
+    const exists = await prisma.workflow.findUnique({
+      where: { id },
+    });
+
+    if (!exists) return false;
+
+    await prisma.workflow.delete({
+      where: { id },
+    });
+
+    return true;
   }
 }
 
-export const workflowRepository =
-  new WorkflowRepository();
+export const workflowRepository = new WorkflowRepository();

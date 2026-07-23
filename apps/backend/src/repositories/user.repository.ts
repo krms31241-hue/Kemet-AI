@@ -1,86 +1,84 @@
-import crypto from "node:crypto";
+import { prisma } from "../database/prisma.js";
 
 export interface UserEntity {
   id: string;
   email: string;
   username: string;
   passwordHash: string;
-  firstName?: string;
-  lastName?: string;
-  avatarUrl?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatarUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export class UserRepository {
-  private users = new Map<string, UserEntity>();
-
   async findById(id: string): Promise<UserEntity | null> {
-    return this.users.get(id) ?? null;
+    return prisma.user.findUnique({
+      where: { id },
+    });
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    for (const user of this.users.values()) {
-      if (user.email === email) {
-        return user;
-      }
-    }
-
-    return null;
+    return prisma.user.findUnique({
+      where: { email },
+    });
   }
 
   async findByUsername(username: string): Promise<UserEntity | null> {
-    for (const user of this.users.values()) {
-      if (user.username === username) {
-        return user;
-      }
-    }
-
-    return null;
+    return prisma.user.findUnique({
+      where: { username },
+    });
   }
 
   async create(
     user: Omit<UserEntity, "id" | "createdAt" | "updatedAt">,
   ): Promise<UserEntity> {
-    const entity: UserEntity = {
-      ...user,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.users.set(entity.id, entity);
-
-    return entity;
+    return prisma.user.create({
+      data: user,
+    });
   }
 
   async update(
     id: string,
     data: Partial<Omit<UserEntity, "id">>,
   ): Promise<UserEntity | null> {
-    const user = await this.findById(id);
+    const exists = await prisma.user.findUnique({
+      where: { id },
+    });
 
-    if (!user) {
+    if (!exists) {
       return null;
     }
 
-    const updated: UserEntity = {
-      ...user,
-      ...data,
-      updatedAt: new Date(),
-    };
-
-    this.users.set(id, updated);
-
-    return updated;
+    return prisma.user.update({
+      where: { id },
+      data,
+    });
   }
 
   async delete(id: string): Promise<boolean> {
-    return this.users.delete(id);
+    const exists = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!exists) {
+      return false;
+    }
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return true;
   }
 
   async findAll(): Promise<UserEntity[]> {
-    return [...this.users.values()];
+    return prisma.user.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
   }
 }
 
