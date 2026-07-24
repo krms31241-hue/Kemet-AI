@@ -2,15 +2,10 @@ import express from "express";
 import cors from "cors";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-
-import helmetModule from "helmet";
+import helmet from "helmet";
 
 import { apiRouter } from "./api/routes/index.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
-
-const helmet =
-  (helmetModule as unknown as { default?: typeof helmetModule }).default ??
-  helmetModule;
 
 export function createHttpServer() {
   const app = express();
