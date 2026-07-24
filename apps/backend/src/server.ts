@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import compression from "compression";
 import cookieParser from "cookie-parser";
-import helmet from "helmet";
+// import helmet from "helmet";
 
 import { apiRouter } from "./api/routes/index.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
@@ -11,7 +11,7 @@ export function createHttpServer() {
   const app = express();
 
   app.use(cors());
-  app.use(helmet());
+// app.use(helmet());
   app.use(compression());
   app.use(express.json());
   app.use(cookieParser());
